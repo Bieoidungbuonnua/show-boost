@@ -1,127 +1,117 @@
---// Dịch vụ cần thiết
+-- // Roblox Performance Monitor UI (Pro Version)
+-- // By ChatGPT
+
+-- Dịch vụ Roblox
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Stats = game:GetService("Stats")
-local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
+
+-- Người chơi hiện tại
 local player = Players.LocalPlayer
 
---// Tạo ScreenGui
+-- Tạo ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SystemStatsUI"
+screenGui.Name = "PerfMonitorUI"
 screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
 
---// Nút bật/tắt UI
+-- ID logo bạn yêu cầu
+local LOGO_ID = "rbxassetid://95299420830927"
+
+-- Frame chính (căn giữa)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "StatsFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 180)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+
+-- Đổ bóng cho frame
+local uiCorner = Instance.new("UICorner", mainFrame)
+uiCorner.CornerRadius = UDim.new(0, 15)
+
+local uiStroke = Instance.new("UIStroke", mainFrame)
+uiStroke.Thickness = 2
+uiStroke.Color = Color3.fromRGB(0, 255, 150)
+
+-- Tiêu đề
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Parent = mainFrame
+titleLabel.Text = "⚡ HIỆU SUẤT HỆ THỐNG ⚡"
+titleLabel.Size = UDim2.new(1, 0, 0, 35)
+titleLabel.BackgroundTransparency = 1
+titleLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBold
+
+-- Các thông số
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Parent = mainFrame
+fpsLabel.Position = UDim2.new(0, 10, 0, 50)
+fpsLabel.Size = UDim2.new(1, -20, 0, 25)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fpsLabel.TextScaled = true
+fpsLabel.Font = Enum.Font.GothamMedium
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local pingLabel = fpsLabel:Clone()
+pingLabel.Parent = mainFrame
+pingLabel.Position = UDim2.new(0, 10, 0, 80)
+
+local cpuLabel = fpsLabel:Clone()
+cpuLabel.Parent = mainFrame
+cpuLabel.Position = UDim2.new(0, 10, 0, 110)
+
+local memLabel = fpsLabel:Clone()
+memLabel.Parent = mainFrame
+memLabel.Position = UDim2.new(0, 10, 0, 140)
+
+-- Nút bật/tắt UI
 local toggleButton = Instance.new("ImageButton")
 toggleButton.Name = "ToggleButton"
-toggleButton.Size = UDim2.new(0, 45, 0, 45)
-toggleButton.Position = UDim2.new(1, -60, 0, 10)
-toggleButton.BackgroundTransparency = 1
-toggleButton.Image = "rbxassetid://95299420830927" -- Logo của bạn
 toggleButton.Parent = screenGui
+toggleButton.Size = UDim2.new(0, 60, 0, 60)
+toggleButton.Position = UDim2.new(0, 15, 0, 15)
+toggleButton.BackgroundTransparency = 1
+toggleButton.Image = LOGO_ID -- Logo từ ID bạn đưa
 
---// Khung hiển thị thông tin
-local statsFrame = Instance.new("Frame")
-statsFrame.Name = "StatsFrame"
-statsFrame.Size = UDim2.new(0, 180, 0, 120)
-statsFrame.Position = UDim2.new(1, -190, 0, 10)
-statsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-statsFrame.BorderSizePixel = 0
-statsFrame.Visible = true
-statsFrame.Parent = screenGui
+-- Ẩn/hiện UI khi bấm nút
+local isVisible = true
+toggleButton.MouseButton1Click:Connect(function()
+	isVisible = not isVisible
+	mainFrame.Visible = isVisible
+end)
 
---// Bo góc khung
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = statsFrame
+-- Tính toán FPS, Ping, CPU, RAM
+local lastUpdate = tick()
+local frameCounter = 0
 
---// Tiêu đề
-local title = Instance.new("TextLabel")
-title.Name = "Title"
-title.Size = UDim2.new(1, 0, 0, 25)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "📊 Hệ thống"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 16
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Parent = statsFrame
-
---// FPS
-local fpsLabel = Instance.new("TextLabel")
-fpsLabel.Size = UDim2.new(1, -10, 0, 25)
-fpsLabel.Position = UDim2.new(0, 5, 0, 30)
-fpsLabel.BackgroundTransparency = 1
-fpsLabel.Text = "FPS: 0"
-fpsLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-fpsLabel.Font = Enum.Font.GothamBold
-fpsLabel.TextSize = 14
-fpsLabel.Parent = statsFrame
-
---// Ping
-local pingLabel = Instance.new("TextLabel")
-pingLabel.Size = UDim2.new(1, -10, 0, 25)
-pingLabel.Position = UDim2.new(0, 5, 0, 55)
-pingLabel.BackgroundTransparency = 1
-pingLabel.Text = "Ping: 0ms"
-pingLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-pingLabel.TextXAlignment = Enum.TextXAlignment.Left
-pingLabel.Font = Enum.Font.GothamBold
-pingLabel.TextSize = 14
-pingLabel.Parent = statsFrame
-
---// CPU
-local cpuLabel = Instance.new("TextLabel")
-cpuLabel.Size = UDim2.new(1, -10, 0, 25)
-cpuLabel.Position = UDim2.new(0, 5, 0, 80)
-cpuLabel.BackgroundTransparency = 1
-cpuLabel.Text = "CPU: 0%"
-cpuLabel.TextColor3 = Color3.fromRGB(0, 191, 255)
-cpuLabel.TextXAlignment = Enum.TextXAlignment.Left
-cpuLabel.Font = Enum.Font.GothamBold
-cpuLabel.TextSize = 14
-cpuLabel.Parent = statsFrame
-
---// RAM
-local ramLabel = Instance.new("TextLabel")
-ramLabel.Size = UDim2.new(1, -10, 0, 25)
-ramLabel.Position = UDim2.new(0, 5, 0, 105)
-ramLabel.BackgroundTransparency = 1
-ramLabel.Text = "RAM: 0MB"
-ramLabel.TextColor3 = Color3.fromRGB(255, 99, 71)
-ramLabel.TextXAlignment = Enum.TextXAlignment.Left
-ramLabel.Font = Enum.Font.GothamBold
-ramLabel.TextSize = 14
-ramLabel.Parent = statsFrame
-
---// Hàm cập nhật số liệu
-local frameCounter, lastUpdate = 0, tick()
 RunService.RenderStepped:Connect(function()
-	frameCounter += 1
+	frameCounter = frameCounter + 1
 	local now = tick()
 	if now - lastUpdate >= 1 then
-		-- FPS
-		fpsLabel.Text = "FPS: " .. tostring(frameCounter)
+		local fps = frameCounter
 		frameCounter = 0
 		lastUpdate = now
 
+		-- FPS
+		fpsLabel.Text = "FPS: " .. tostring(fps)
+
 		-- Ping
 		local ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue()
-		pingLabel.Text = "Ping: " .. math.floor(ping) .. "ms"
+		pingLabel.Text = "Ping: " .. math.floor(ping) .. " ms"
 
 		-- CPU
-		local cpuUsage = Stats.Workspace:GetTotalMemoryUsageMb() / 8192 * 100 -- Tính gần đúng %
-		cpuLabel.Text = string.format("CPU: %.1f%%", cpuUsage)
+		local cpu = Stats.Workspace.Heartbeat:GetValue() * 100
+		cpuLabel.Text = string.format("CPU: %.1f%%", cpu)
 
 		-- RAM
-		local ramUsage = Stats.Workspace:GetTotalMemoryUsageMb()
-		ramLabel.Text = string.format("RAM: %.1fMB", ramUsage)
+		local mem = Stats:GetTotalMemoryUsageMb()
+		memLabel.Text = string.format("RAM: %.1f MB", mem)
 	end
-end)
-
---// Chức năng bật/tắt bảng thống kê
-local visible = true
-toggleButton.MouseButton1Click:Connect(function()
-	visible = not visible
-	statsFrame.Visible = visible
 end)
