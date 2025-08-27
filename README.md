@@ -10,7 +10,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- ====== Config ======
-local GITHUB_RAW_LOGO = "https://raw.githubusercontent.com/Bieoidungbuonnua/show-boost/main/12331.png"
+local GITHUB_RAW_LOGO = "https://raw.githubusercontent.com/Bieoidungbuonnua/show-boost/main/tquyencute.png"
 local UI_WIDTH = 460
 local UI_HEIGHT = 96
 local UPDATE_INTERVAL = 0.5
